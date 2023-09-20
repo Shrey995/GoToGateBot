@@ -1,0 +1,6 @@
+{
+    "username":"s27184884@gmail.com",
+    "password":"Adm!n@123",
+    "apppassword":"xczx swyz atej vilo",
+    "appname":"Python"
+}

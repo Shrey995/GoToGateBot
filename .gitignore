@@ -1,0 +1,9 @@
+# Ignore reports folder
+/reports/
+
+# Ignore __pycache__ directory
+__pycache__/
+
+# Ignore compiled Python files
+*.pyc
+*.pyo
