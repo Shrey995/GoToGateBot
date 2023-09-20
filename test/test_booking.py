@@ -178,7 +178,7 @@ class TestFlightBooking(unittest.TestCase):
             search_button.click()
 
 
-
+            self.take_screenshot("Search_Flight")
             time.sleep(20)  # Adjust the sleep time as needed
 
         except Exception as e:
