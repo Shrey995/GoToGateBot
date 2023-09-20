@@ -7,23 +7,39 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import json
 import unittest
+import os
 
 class TestFlightBooking(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        # Find the last folder number in the "reports" directory
+        existing_folders = [f for f in os.listdir("reports") if f.startswith("test")]
+        cls.test_case_count = len(existing_folders) + 1
 
     def setUp(self):
         self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
         self.driver.implicitly_wait(10)
         self.driver.maximize_window()
 
+        # Create the folder name with zero-padding
+        folder_name = f"test{self.test_case_count:02}_screenshots"
+        self.test_dir = os.path.join("reports", folder_name)
+        os.makedirs(self.test_dir, exist_ok=True)
+
         # Read inputs from inputs.txt
         with open('inputs/input.txt', 'r') as file:
             self.inputs = json.load(file)
 
+        # Increment the test case count for the next test
+        self.__class__.test_case_count += 1
+
     def tearDown(self):
+        self.driver.save_screenshot(os.path.join(self.test_dir, f"{str(int(time.time()))}.png"))
         self.driver.quit()
 
     def take_screenshot(self, name):
-        self.driver.save_screenshot(f"reports/{self.__class__.__name__}/{name}.png")
+        self.driver.save_screenshot(os.path.join(self.test_dir, f"{name}.png"))
 
     def change_date_class(self, start_date_label, end_date_label, new_start_class, new_end_class):
         try:
@@ -184,9 +200,10 @@ class TestFlightBooking(unittest.TestCase):
             search_button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-testid="searchForm-searchFlights-button"]'))
             )
+            self.take_screenshot("Search_Flight")
             search_button.click()
 
-            # self.take_screenshot("Search_Flight")
+            
 
             # Wait for flights to load (adjust the wait time as needed)
             time.sleep(10)  # Wait for 10 seconds (adjust as needed)
@@ -198,6 +215,7 @@ class TestFlightBooking(unittest.TestCase):
 
             # Scroll down a bit to make the "Cheapest" section visible
             self.driver.execute_script("window.scrollBy(0, 200);")
+            self.take_screenshot("Cheapest_Flight_Selected")
 
             # Find the button within the "Cheapest" div based on class or text
             book_button = cheapest_title_element.find_element(By.XPATH, "//button[@data-testid='resultPage-book-button']")
@@ -207,7 +225,7 @@ class TestFlightBooking(unittest.TestCase):
             time.sleep(10)  # Wait for 10 seconds (adjust as needed)
 
             # Optional: You can take a screenshot here if needed
-            # self.take_screenshot("Cheapest_Flight_Selected")
+            
 
         except Exception as e:
             raise AssertionError(f"An error occurred during flight search: {str(e)}")
