@@ -1,24 +1,26 @@
-import unittest
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import datetime
 import time
+import json
+import unittest
 
 class TestFlightBooking(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-        cls.driver.implicitly_wait(10)
-        cls.driver.maximize_window()
+    def setUp(self):
+        self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+        self.driver.implicitly_wait(10)
+        self.driver.maximize_window()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.driver.quit()
+        # Read inputs from inputs.txt
+        with open('inputs/input.txt', 'r') as file:
+            self.inputs = json.load(file)
+
+    def tearDown(self):
+        self.driver.quit()
 
     def take_screenshot(self, name):
         self.driver.save_screenshot(f"reports/{self.__class__.__name__}/{name}.png")
@@ -82,20 +84,22 @@ class TestFlightBooking(unittest.TestCase):
             self.fail(f"An error occurred while clicking the next month button: {str(e)}")
 
     def test_flight_booking(self):
-        # Input departure and return dates
-        departure_date = "Sun Oct 08 2023"
-        return_date = "Sun Oct 15 2023"
+        # Input parameters from inputs.txt
+        departure_date = self.inputs.get("departure_date")
+        return_date = self.inputs.get("return_date")
+        departure_month = self.inputs.get("departure_month")
+        departure_year = self.inputs.get("departure_year")
 
         # Navigate to the flight booking page
         self.driver.get("https://www.gotogate.com/")
 
         # Search for a flight with a date range, origin, and destination
         try:
-# Select origin from the combo box
+            # Select origin from the combo box
             origin_input = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "searchForm-singleBound-origin-input"))
             )
-            origin_input.send_keys("Mumbai")
+            origin_input.send_keys(self.inputs.get("origin"))
             time.sleep(3)
 
             # Wait for the autosuggestion to appear
@@ -121,7 +125,7 @@ class TestFlightBooking(unittest.TestCase):
             destination_input = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "searchForm-singleBound-destination-input"))
             )
-            destination_input.send_keys("Bangalore")
+            destination_input.send_keys(self.inputs.get("destination"))
             time.sleep(3)
 
             # Wait for the autosuggestion to appear
@@ -144,7 +148,6 @@ class TestFlightBooking(unittest.TestCase):
                 # Handle the case where no list elements with the specified class were found
                 raise AssertionError("No elements found with class 'css-1uv24kw' within autosuggestion")
 
-
             # Click the departure date input
             departure_input = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "singleBound.departureDate"))
@@ -152,7 +155,7 @@ class TestFlightBooking(unittest.TestCase):
             departure_input.click()
 
             # Select the correct month and year in the date picker
-            self.select_month_and_year("October", "2023")
+            self.select_month_and_year(departure_month, departure_year)
 
             # Select the departure date based on the input
             if not self.select_date(departure_date):
@@ -168,40 +171,43 @@ class TestFlightBooking(unittest.TestCase):
             self.driver.execute_script("window.scrollBy(0, 200);")
 
             # Select the correct month and year in the date picker
-            self.select_month_and_year("October", "2023")
+            self.select_month_and_year(departure_month, departure_year)
 
             # Select the return date based on the input
             if not self.select_date(return_date):
                 raise AssertionError(f"Return date '{return_date}' not found in the date picker")
 
-
+            # Scroll up to the top of the page
             self.driver.execute_script("window.scrollTo(0, 0);")
 
             # Click the "Search Flights" button
             search_button = WebDriverWait(self.driver, 10).until(
-             EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-testid="searchForm-searchFlights-button"]'))
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-testid="searchForm-searchFlights-button"]'))
             )
             search_button.click()
 
-
-            self.take_screenshot("Search_Flight")
-            # time.sleep(20)  # Adjust the sleep time as needed
+            # self.take_screenshot("Search_Flight")
 
             # Wait for flights to load (adjust the wait time as needed)
             time.sleep(10)  # Wait for 10 seconds (adjust as needed)
 
             # Locate the "Cheapest" section's title using XPath
             cheapest_title_element = WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//div[@data-testid='result-tripHeader-title'][contains(text(), 'Cheapest')]"))
+                EC.presence_of_element_located((By.XPATH, "//div[@data-testid='result-tripHeader-title'][contains(text(), 'Cheapest')]"))
             )
+
+            # Scroll down a bit to make the "Cheapest" section visible
             self.driver.execute_script("window.scrollBy(0, 200);")
+
             # Find the button within the "Cheapest" div based on class or text
             book_button = cheapest_title_element.find_element(By.XPATH, "//button[@data-testid='resultPage-book-button']")
             book_button.click()
-            time.sleep(100)  # Wait for 10 seconds (adjust as needed)
 
-             # Optional: You can take a screenshot here if needed
-            self.take_screenshot("Cheapest_Flight_Selected")
+            # Wait for a moment for the flights to load (adjust the wait time as needed)
+            time.sleep(10)  # Wait for 10 seconds (adjust as needed)
+
+            # Optional: You can take a screenshot here if needed
+            # self.take_screenshot("Cheapest_Flight_Selected")
 
         except Exception as e:
             raise AssertionError(f"An error occurred during flight search: {str(e)}")

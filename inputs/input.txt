@@ -1,6 +1,12 @@
 {
-    "username":"s27184884@gmail.com",
-    "password":"Adm!n@123",
-    "apppassword":"xczx swyz atej vilo",
-    "appname":"Python"
+    "username": "s27184884@gmail.com",
+    "password": "Adm!n@123",
+    "apppassword": "xczx swyz atej vilo",
+    "appname": "Python",
+    "departure_date": "Sun Oct 08 2023",
+    "return_date": "Sun Oct 15 2023",
+    "departure_month": "October",
+    "departure_year": "2023",
+    "origin": "Mumbai",
+    "destination": "Bangalore"
 }
