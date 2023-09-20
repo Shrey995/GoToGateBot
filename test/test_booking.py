@@ -164,12 +164,18 @@ class TestFlightBooking(unittest.TestCase):
             )
             return_input.click()
 
+            # Scroll down to make the date picker visible
+            self.driver.execute_script("window.scrollBy(0, 200);")
+
             # Select the correct month and year in the date picker
             self.select_month_and_year("October", "2023")
 
             # Select the return date based on the input
             if not self.select_date(return_date):
                 raise AssertionError(f"Return date '{return_date}' not found in the date picker")
+
+
+            self.driver.execute_script("window.scrollTo(0, 0);")
 
             # Click the "Search Flights" button
             search_button = WebDriverWait(self.driver, 10).until(
@@ -179,7 +185,23 @@ class TestFlightBooking(unittest.TestCase):
 
 
             self.take_screenshot("Search_Flight")
-            time.sleep(20)  # Adjust the sleep time as needed
+            # time.sleep(20)  # Adjust the sleep time as needed
+
+            # Wait for flights to load (adjust the wait time as needed)
+            time.sleep(10)  # Wait for 10 seconds (adjust as needed)
+
+            # Locate the "Cheapest" section's title using XPath
+            cheapest_title_element = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@data-testid='result-tripHeader-title'][contains(text(), 'Cheapest')]"))
+            )
+            self.driver.execute_script("window.scrollBy(0, 200);")
+            # Find the button within the "Cheapest" div based on class or text
+            book_button = cheapest_title_element.find_element(By.XPATH, "//button[@data-testid='resultPage-book-button']")
+            book_button.click()
+            time.sleep(100)  # Wait for 10 seconds (adjust as needed)
+
+             # Optional: You can take a screenshot here if needed
+            self.take_screenshot("Cheapest_Flight_Selected")
 
         except Exception as e:
             raise AssertionError(f"An error occurred during flight search: {str(e)}")
